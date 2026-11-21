@@ -2,6 +2,7 @@
 import os
 import time
 
+import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 from google.genai import errors
@@ -11,11 +12,23 @@ from prompts import SYSTEM_PROMPT
 
 load_dotenv()
 
+# Load API key from environment first (.env locally)
 API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
+# If not found, try Streamlit Cloud Secrets
 if not API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in .env file")
+    try:
+        API_KEY = st.secrets["GEMINI_API_KEY"]
+        MODEL = st.secrets.get("GEMINI_MODEL", MODEL)
+    except Exception:
+        API_KEY = None
+
+if not API_KEY:
+    raise ValueError(
+        "GEMINI_API_KEY not configured. "
+        "Add it to your .env file or Streamlit Cloud Secrets."
+    )
 
 client = genai.Client(api_key=API_KEY)
 
